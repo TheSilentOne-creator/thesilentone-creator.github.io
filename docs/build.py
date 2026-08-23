@@ -305,6 +305,21 @@ def generate_html_page(tutorial, lang, title, body_html, prev_file, next_file,
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title} · {"The Night Keeper's Book" if lang == 'en' else '守夜者之书'}</title>
+
+    <!-- ===== 主题预加载：在 CSS 渲染前确定主题 ===== -->
+    <script>
+        (function() {{
+            var theme = localStorage.getItem('nightkeeper-theme')
+            if (!theme) {{
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+                theme = prefersDark ? 'dark' : 'light'
+            }}
+            if (theme === 'light') {{
+                document.documentElement.classList.add('light-theme')
+            }}
+        }})()
+    </script>
+
     <link rel="preload" href="/css/style.css" as="style">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -456,18 +471,63 @@ def generate_html_page(tutorial, lang, title, body_html, prev_file, next_file,
             color: var(--accent);
             border-color: var(--accent);
         }}
+        /* 侧边栏 Tab */
+        .sidebar-tabs {{
+            padding: 8px 12px 12px 12px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+            display: flex;
+            gap: 4px;
+        }}
+        .sidebar-tab {{
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }}
+        .sidebar-tab:hover {{
+            color: var(--text-secondary);
+            border-color: var(--border-light);
+        }}
+        .sidebar-tab.active {{
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }}
+        .tab-content {{
+            display: none;
+        }}
+        .tab-content.active {{
+            display: block;
+        }}
+        .toc-empty {{
+            color: var(--text-muted);
+            padding: 12px;
+            font-size: 14px;
+            text-align: center;
+        }}
+        /* 教程目录列表 */
+        .series-toc-list .toc-link {{
+            font-size: 13px;
+        }}
+        .series-toc-list .toc-link.active {{
+            color: var(--accent);
+            background: var(--accent-dim);
+            border-left: 3px solid var(--accent);
+        }}
     </style>
 </head>
 <body>
     <div id="navbar"></div>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-inner">
-            <ul class="sidebar-menu">
-                {series_sidebar_html}
-            </ul>
-        </div>
-    </aside>
+    <aside class="sidebar" id="sidebar"></aside>
 
     <main class="main-content">
         <div class="content-inner tutorial-content">
@@ -549,7 +609,7 @@ def generate_html_page(tutorial, lang, title, body_html, prev_file, next_file,
 
 
 # ============================================================
-# 批量处理
+# 批量处理教程内容页
 # ============================================================
 def batch_process_all_tutorials():
     data = load_tutorials_data()
@@ -611,6 +671,54 @@ def batch_process_all_tutorials():
 
 
 # ============================================================
+# 清理静态页面的侧边栏（让 toc.js 接管）
+# ============================================================
+
+def clean_static_pages():
+    """
+    清理 about 和 tutorials 列表页的侧边栏，只保留空容器
+    让 toc.js 动态生成
+    """
+    pages = [
+        ('zh', 'about', 'index.html'),
+        ('en', 'about', 'index.html'),
+        ('zh', 'tutorials', 'index.html'),
+        ('en', 'tutorials', 'index.html'),
+    ]
+
+    for lang, folder, filename in pages:
+        page_path = BASE_DIR / lang / folder / filename
+        if not page_path.exists():
+            print(f'  ⚠️ 文件不存在: {page_path}')
+            continue
+
+        content = page_path.read_text(encoding='utf-8')
+
+        # ===== 直接删掉所有硬编码的侧边栏脚本，只保留空容器 =====
+        # 1. 删除 <aside class="sidebar"...>...</aside> 之间的所有内容
+        # 2. 删除紧跟其后的 <script>...</script>
+        
+        # 先删除侧边栏容器内的所有内容（保留容器本身）
+        content = re.sub(
+            r'(<aside\s+class="sidebar"\s+id="sidebar">).*?(</aside>)',
+            r'\1\2',
+            content,
+            flags=re.DOTALL
+        )
+        
+        # 再删除紧跟在 </aside> 后面的 <script>...</script>
+        content = re.sub(
+            r'(</aside>)\s*<script>.*?</script>',
+            r'\1',
+            content,
+            flags=re.DOTALL
+        )
+
+        page_path.write_text(content, encoding='utf-8')
+        print(f'  ✅ 已清理: {page_path}')
+
+
+# ============================================================
 # 主函数
 # ============================================================
 def main():
@@ -626,11 +734,19 @@ def main():
     print('  ✅ 支持代码块复制按钮')
     print('=' * 60 + '\n')
 
+    # 1. 生成教程内容页
     results = batch_process_all_tutorials()
 
     print('=' * 60)
-    print(f'🎉 构建完成！共处理 {len(results)} 个文件')
-    print('=' * 60)
+    print(f'🎉 教程内容页构建完成！共处理 {len(results)} 个文件')
+    print('=' * 60 + '\n')
+
+    # 2. 清理静态页面侧边栏
+    print('🧹 清理静态页面侧边栏（让 toc.js 接管）...')
+    clean_static_pages()
+
+    print('\n' + '=' * 60)
+    print('🎉 全部完成！')
 
 
 if __name__ == '__main__':

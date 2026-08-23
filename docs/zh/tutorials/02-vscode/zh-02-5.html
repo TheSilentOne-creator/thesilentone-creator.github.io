@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>全部通关 · 守夜者之书</title>
+
+    <!-- ===== 主题预加载：在 CSS 渲染前确定主题 ===== -->
+    <script>
+        (function() {
+            var theme = localStorage.getItem('nightkeeper-theme')
+            if (!theme) {
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+                theme = prefersDark ? 'dark' : 'light'
+            }
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-theme')
+            }
+        })()
+    </script>
+
     <link rel="preload" href="/css/style.css" as="style">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -155,18 +170,63 @@
             color: var(--accent);
             border-color: var(--accent);
         }
+        /* 侧边栏 Tab */
+        .sidebar-tabs {
+            padding: 8px 12px 12px 12px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+            display: flex;
+            gap: 4px;
+        }
+        .sidebar-tab {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .sidebar-tab:hover {
+            color: var(--text-secondary);
+            border-color: var(--border-light);
+        }
+        .sidebar-tab.active {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .toc-empty {
+            color: var(--text-muted);
+            padding: 12px;
+            font-size: 14px;
+            text-align: center;
+        }
+        /* 教程目录列表 */
+        .series-toc-list .toc-link {
+            font-size: 13px;
+        }
+        .series-toc-list .toc-link.active {
+            color: var(--accent);
+            background: var(--accent-dim);
+            border-left: 3px solid var(--accent);
+        }
     </style>
 </head>
 <body>
     <div id="navbar"></div>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-inner">
-            <ul class="sidebar-menu">
-                <li class="sidebar-category">暂无目录</li>
-            </ul>
-        </div>
-    </aside>
+    <aside class="sidebar" id="sidebar"></aside>
 
     <main class="main-content">
         <div class="content-inner tutorial-content">

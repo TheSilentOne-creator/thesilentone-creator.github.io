@@ -8,12 +8,15 @@
 // ============================================================
 function getCurrentLang() {
     var path = window.location.pathname
-    if (path.startsWith('/zh/')) return 'zh'
+    
+    // 优先从路径判断
     if (path.startsWith('/en/')) return 'en'
-    // 如果路径不包含语言标识，尝试从 localStorage 读取
+    if (path.startsWith('/zh/')) return 'zh'
+    
+    // 如果路径是根目录，从 localStorage 或浏览器语言判断
     var saved = localStorage.getItem('nightkeeper-lang')
     if (saved === 'zh' || saved === 'en') return saved
-    // 最后根据浏览器语言
+    
     var browserLang = navigator.language || navigator.userLanguage
     return (browserLang && browserLang.startsWith('zh')) ? 'zh' : 'en'
 }
@@ -95,7 +98,6 @@ fetch('/data/tutorials.json')
         window.CURRENT_LANG = lang
         window.SIDEBAR_CONFIG = buildSidebarConfig(data, lang)
         console.log('✅ 教程数据已加载，当前语言:', lang)
-        console.log('✅ 侧边栏配置已生成')
     })
     .catch(function(err) {
         console.warn('⚠️ 教程数据加载失败:', err)
@@ -110,11 +112,9 @@ fetch('/data/tutorials.json')
         script.onload = function() {
             console.log('✅ components.js 已加载')
             
-            // 渲染导航栏
-            if (typeof renderNavbar === 'function') {
-                renderNavbar()
-                console.log('✅ 导航栏已渲染')
-            }
+            // 渲染导航栏和页脚
+            if (typeof renderNavbar === 'function') renderNavbar()
+            if (typeof renderFooter === 'function') renderFooter()
             
             // ============================================================
             // 3. 加载 i18n.js（语言切换按钮）
@@ -122,10 +122,9 @@ fetch('/data/tutorials.json')
             var i18nScript = document.createElement('script')
             i18nScript.src = '/js/i18n.js'
             document.body.appendChild(i18nScript)
-            console.log('✅ i18n.js 已加载')
             
             // ============================================================
-            // 4. 判断是否首页，决定侧边栏
+            // 4. 判断页面类型，决定侧边栏
             // ============================================================
             var currentPath = window.location.pathname
             var lang = getCurrentLang()
@@ -135,11 +134,13 @@ fetch('/data/tutorials.json')
                           currentPath === '/' || currentPath === '/index.html')
             
             if (isHome) {
+                // 首页：使用 renderSidebar 渲染教程列表
                 if (typeof renderSidebar === 'function') {
                     renderSidebar()
                     console.log('🏠 首页：渲染侧边栏')
                 }
             } else {
+                // 其他页面：加载 toc.js 生成目录
                 var tocScript = document.createElement('script')
                 tocScript.src = '/js/toc.js'
                 tocScript.onload = function() {
@@ -149,12 +150,6 @@ fetch('/data/tutorials.json')
                     }
                 }
                 document.body.appendChild(tocScript)
-            }
-            
-            // 渲染页脚
-            if (typeof renderFooter === 'function') {
-                renderFooter()
-                console.log('✅ 页脚已渲染')
             }
         }
         document.body.appendChild(script)

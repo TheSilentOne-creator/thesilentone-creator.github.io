@@ -3,7 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>zh-02-2 · 守夜者之书</title>
+    <title>第二章 - 界面布局与核心区域 · 守夜者之书</title>
+
+    <!-- ===== 主题预加载：在 CSS 渲染前确定主题 ===== -->
+    <script>
+        (function() {
+            var theme = localStorage.getItem('nightkeeper-theme')
+            if (!theme) {
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+                theme = prefersDark ? 'dark' : 'light'
+            }
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-theme')
+            }
+        })()
+    </script>
+
     <link rel="preload" href="/css/style.css" as="style">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -155,18 +170,63 @@
             color: var(--accent);
             border-color: var(--accent);
         }
+        /* 侧边栏 Tab */
+        .sidebar-tabs {
+            padding: 8px 12px 12px 12px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+            display: flex;
+            gap: 4px;
+        }
+        .sidebar-tab {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .sidebar-tab:hover {
+            color: var(--text-secondary);
+            border-color: var(--border-light);
+        }
+        .sidebar-tab.active {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .toc-empty {
+            color: var(--text-muted);
+            padding: 12px;
+            font-size: 14px;
+            text-align: center;
+        }
+        /* 教程目录列表 */
+        .series-toc-list .toc-link {
+            font-size: 13px;
+        }
+        .series-toc-list .toc-link.active {
+            color: var(--accent);
+            background: var(--accent-dim);
+            border-left: 3px solid var(--accent);
+        }
     </style>
 </head>
 <body>
     <div id="navbar"></div>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-inner">
-            <ul class="sidebar-menu">
-                <li class="sidebar-category">暂无目录</li>
-            </ul>
-        </div>
-    </aside>
+    <aside class="sidebar" id="sidebar"></aside>
 
     <main class="main-content">
         <div class="content-inner tutorial-content">
@@ -186,12 +246,12 @@
                     <span class="tutorial-level">基础</span>
                     <span class="tutorial-readtime">⏱️ 约 30 分钟</span>
                 </div>
-                <h1>zh-02-2</h1>
+                <h1>第二章 - 界面布局与核心区域</h1>
                 <p class="tutorial-subtitle">武装你的瑞士军刀，把编辑器变成真正的开发工作台。</p>
             </header>
 
             <section class="tutorial-body">
-                <h2 id="-">第二章 - 界面布局与核心区域</h2>
+                <h1 id="-">第二章 - 界面布局与核心区域</h1>
 <p>在第一章，我们把 VS Code 装好了，也配置了 <code>code</code> 命令。现在，打开 VS Code，你会看到这样一个界面。</p>
 <p><img alt="VS Code overview" src="./Images/Chapter 2/overview.png" /></p>
 <p>这一章，我们要把这张图里的每一个区域逐个认一遍。学完之后，你不需要记住所有东西，但当你听到“活动栏”、“命令面板”、“终端”这些词时，脑子里能立刻浮现出它们的位置和用途。</p>
@@ -200,7 +260,7 @@
 <p><em>“你不会把 VS Code 点炸。最坏的情况就是关掉重开。今天就放心点。”</em></p>
 </blockquote>
 <hr />
-<h3 id="21">2.1 活动栏（侧边栏）</h3>
+<h2 id="21">2.1 活动栏（侧边栏）</h2>
 <p><strong>活动栏</strong> 是 VS Code 左边那一排竖着的图标。它让你在不同功能之间切换——就像一个抽屉柜，每个图标是一个抽屉，点一下就拉开。</p>
 <p><img alt="Activity bar" src="./Images/Chapter 2/2.1/activity-bar.png" /></p>
 <p>从上到下，依次是：</p>
@@ -245,7 +305,7 @@
 <p><em>Kate 点了一下资源管理器图标，左边弹出一个文件列表。她说：“原来我的文件都在这里。我以前每次打开文件都是 File → Open，一层层翻文件夹——翻到地老天荒。”</em></p>
 </blockquote>
 <hr />
-<h3 id="22">2.2 编辑区</h3>
+<h2 id="22">2.2 编辑区</h2>
 <p><strong>编辑区</strong>是 VS Code 中间最大的那一块。你敲的每一个字、写的每一行 Markdown、看的每一段代码，都在这里。</p>
 <p><img alt="Editor area" src="./Images/Chapter 2/2.2/editor-area.jpg" /></p>
 <p><strong>编辑区有几个常用操作：</strong></p>
@@ -262,7 +322,7 @@
 <p><em>“对。分屏是‘一边读一边写’的最佳姿势。”</em></p>
 </blockquote>
 <hr />
-<h3 id="23">2.3 集成终端</h3>
+<h2 id="23">2.3 集成终端</h2>
 <p><strong>集成终端</strong>是 VS Code 底部的一个面板——它就是一个嵌入在编辑器里的终端。你不用切换窗口，在编辑器里就能敲命令。</p>
 <p><img alt="Integrated terminal" src="./Images/Chapter 2/2.3/terminal.png.jpg" /></p>
 <p><strong>打开和关闭：</strong></p>
@@ -282,7 +342,7 @@
 <p><em>Kate 按了 <code>Ctrl+`</code>，底部弹出一个终端面板。她输入 <code>ls</code>，看到了当前文件夹里的所有文件。她说：“原来我不用最小化 VS Code 去开 PowerShell——它自己就有。这就是你 02 前言里说的‘指挥中心’。”</em></p>
 </blockquote>
 <hr />
-<h3 id="24">2.4 状态栏</h3>
+<h2 id="24">2.4 状态栏</h2>
 <p><strong>状态栏</strong>是 VS Code 最底部那一行字。你平时可能不会注意它，但它能告诉你几个关键信息：</p>
 <p><img alt="Status bar" src="./Images/Chapter 2/2.4/status-bar.jpg" /></p>
 <table>
@@ -321,7 +381,7 @@
 <p><em>“对。状态栏是 VS Code 的‘仪表盘’。它不主动说话，但你需要信息的时候，低头看一眼就能找到。”</em></p>
 </blockquote>
 <hr />
-<h3 id="25">2.5 命令面板</h3>
+<h2 id="25">2.5 命令面板</h2>
 <p><strong>命令面板</strong>是 VS Code 的“万能入口”。你不需要记住所有快捷键——只需要记住 <code>Ctrl+Shift+P</code>，然后输入你想做的事。</p>
 <p><img alt="Command palette" src="./Images/Chapter 2/2.5/command-palette.jpg" /></p>
 <p>按 <code>Ctrl+Shift+P</code>（Mac 上是 <code>Cmd+Shift+P</code>），屏幕顶部中间会弹出一个输入框。这就是命令面板。</p>

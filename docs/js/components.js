@@ -83,9 +83,6 @@ function renderNavbar() {
             toggle.classList.toggle('active')
         })
     }
-    
-    // 主题切换按钮（由 theme 模块处理）
-    // 这里什么都不做，由下面的主题模块接管
 }
 
 // ============================================================
@@ -104,25 +101,53 @@ function renderSidebar() {
         return
     }
     
+    // ===== 根据语言设置所有文案 =====
+    var lang = window.CURRENT_LANG || 'zh'
+    var isZh = lang === 'zh'
+    
+    // 状态标签
+    var statusMap = isZh ? {
+        'done': '✅ 已完成',
+        'writing': '✍️ 编写中',
+        'coming': '⏳ 敬请期待'
+    } : {
+        'done': '✅ Done',
+        'writing': '✍️ Writing',
+        'coming': '⏳ Coming Soon'
+    }
+    
+    // 搜索框占位文字
+    var searchPlaceholder = isZh ? '🔍 搜索教程...' : '🔍 Search tutorials...'
+    
+    // 分类名称映射（英文）
+    var categoryLabels = isZh ? {
+        '⚔️ 基础工具': '⚔️ 基础工具',
+        '🌐 网络安全（主线）': '🌐 网络安全（主线）',
+        '🐍 Python 系列（中阶）': '🐍 Python 系列（中阶）',
+        '🚀 进阶之路': '🚀 进阶之路'
+    } : {
+        '⚔️ 基础工具': '⚔️ Core Tools',
+        '🌐 网络安全（主线）': '🌐 Cybersecurity (Main)',
+        '🐍 Python 系列（中阶）': '🐍 Python Series (Intermediate)',
+        '🚀 进阶之路': '🚀 Advanced Path'
+    }
+    
     var sidebarHtml = `
         <div class="sidebar-inner">
             <div class="sidebar-search">
-                <input type="text" id="sidebarSearch" placeholder="🔍 搜索教程..." />
+                <input type="text" id="sidebarSearch" placeholder="${searchPlaceholder}" />
             </div>
             <ul class="sidebar-menu">
     `
     
     window.SIDEBAR_CONFIG.forEach(function(group) {
-        sidebarHtml += '<li class="sidebar-category">' + group.category + '</li>'
+        // 分类名翻译
+        var categoryDisplay = categoryLabels[group.category] || group.category
+        sidebarHtml += '<li class="sidebar-category">' + categoryDisplay + '</li>'
         group.items.forEach(function(item) {
             var isActive = currentPath === item.link || 
                            (item.link !== '/' && currentPath.startsWith(item.link))
             
-            var statusMap = {
-                'done': '✅ 已完成',
-                'writing': '✍️ 编写中',
-                'coming': '⏳ 敬请期待'
-            }
             var statusText = item.status ? statusMap[item.status] : ''
             var statusClass = item.status ? 'status-' + item.status : ''
             
@@ -195,30 +220,19 @@ function renderFooter() {
 }
 
 // ============================================================
-// 5. 主题切换（暗色/亮色）
+// 5. 主题切换
 // ============================================================
 (function() {
     var THEME_KEY = 'nightkeeper-theme'
     
-    function getSavedTheme() {
-        return localStorage.getItem(THEME_KEY)
-    }
-    
     function setTheme(theme) {
         localStorage.setItem(THEME_KEY, theme)
-        applyTheme(theme)
-    }
-    
-    function applyTheme(theme) {
         if (theme === 'light') {
             document.documentElement.classList.add('light-theme')
-            document.documentElement.classList.remove('dark-theme')
-            updateIcon(true)
         } else {
-            document.documentElement.classList.add('dark-theme')
             document.documentElement.classList.remove('light-theme')
-            updateIcon(false)
         }
+        updateIcon(theme === 'light')
     }
     
     function updateIcon(isLight) {
@@ -232,45 +246,38 @@ function renderFooter() {
     }
     
     function toggleTheme() {
-        var current = getSavedTheme()
+        var current = localStorage.getItem(THEME_KEY)
         var next = current === 'light' ? 'dark' : 'light'
         setTheme(next)
     }
     
-    function initTheme() {
-        var saved = getSavedTheme()
-        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-        
-        if (!saved) {
-            saved = prefersDark ? 'dark' : 'light'
-            localStorage.setItem(THEME_KEY, saved)
-        }
-        
-        applyTheme(saved)
-        
+    function initIcon() {
+        var theme = localStorage.getItem(THEME_KEY)
+        updateIcon(theme === 'light')
+    }
+    
+    // 绑定切换按钮
+    function bindToggle() {
         var toggleBtn = document.getElementById('themeToggle')
         if (toggleBtn) {
-            // 移除可能存在的旧监听器
-            var newBtn = toggleBtn.cloneNode(true)
-            toggleBtn.parentNode.replaceChild(newBtn, toggleBtn)
-            newBtn.addEventListener('click', toggleTheme)
+            toggleBtn.addEventListener('click', toggleTheme)
+        } else {
+            setTimeout(bindToggle, 100)
         }
     }
     
-    // 暴露给全局
-    window.theme = {
-        get: getSavedTheme,
-        set: setTheme,
-        toggle: toggleTheme
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initIcon)
+    } else {
+        initIcon()
     }
     
-    // 等待 DOM 加载完成
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTheme)
-    } else {
-        // DOM 已经加载，但导航栏可能还没渲染完成
-        // 延迟执行确保按钮存在
-        setTimeout(initTheme, 100)
+    bindToggle()
+    
+    window.theme = {
+        set: setTheme,
+        toggle: toggleTheme,
+        get: function() { return localStorage.getItem(THEME_KEY) }
     }
 })();
 

@@ -14,14 +14,28 @@ function generateTOC() {
     if (currentPath === '/' || currentPath === '/index.html' ||
         currentPath === '/zh/' || currentPath === '/zh/index.html' ||
         currentPath === '/en/' || currentPath === '/en/index.html') {
+        if (typeof renderSidebar === 'function') {
+            renderSidebar()
+        }
         return
     }
 
+    // 判断是否是静态页面（只显示本页目录，不带标题）
+    var isStaticPage = currentPath.includes('/about/') || 
+                       currentPath.includes('/tutorials/index.html') ||
+                       currentPath === '/zh/tutorials/' || 
+                       currentPath === '/en/tutorials/' ||
+                       currentPath === '/zh/about/' || 
+                       currentPath === '/en/about/'
+
     var content = document.querySelector('.tutorial-content, .content-inner')
-    if (!content) return
+    if (!content) {
+        console.warn('⚠️ 找不到 .tutorial-content 或 .content-inner')
+        return
+    }
 
     // ============================================================
-    // 1. 生成「本页目录」
+    // 生成本页目录
     // ============================================================
     var headings = content.querySelectorAll('h1[id], h2[id], h3[id], h4[id]')
     var pageTocHtml = ''
@@ -45,14 +59,20 @@ function generateTOC() {
     }
 
     // ============================================================
-    // 2. 生成「教程目录」（从 /zh/tutorials/xxx/tutorials.json 读取）
+    // 如果是静态页面：只显示目录内容（不带标题）
     // ============================================================
-    var seriesTocHtml = '<p class="toc-empty">加载中...</p>'
+    if (isStaticPage) {
+        sidebar.innerHTML = pageTocHtml
+        bindTOCLinks(sidebar)
+        return
+    }
 
+    // ============================================================
+    // 教程内容页：显示本页目录 + 教程目录
+    // ============================================================
     var pathParts = currentPath.split('/')
     var lang = pathParts[1] || 'zh'
     var tutorialId = null
-
     for (var i = 0; i < pathParts.length; i++) {
         if (pathParts[i] === 'tutorials' && i + 1 < pathParts.length) {
             tutorialId = pathParts[i + 1]
@@ -60,26 +80,25 @@ function generateTOC() {
         }
     }
 
-    if (tutorialId) {
-        // 从 /zh/tutorials/xxx/tutorials.json 读取
-        var jsonPath = '/' + lang + '/tutorials/' + tutorialId + '/tutorials.json'
-        console.log('📂 加载教程目录:', jsonPath)
+    var seriesTocHtml = '<p class="toc-empty">加载中...</p>'
 
+    if (tutorialId) {
+        var jsonPath = '/' + lang + '/tutorials/' + tutorialId + '/tutorials.json'
         fetch(jsonPath)
             .then(function(res) {
-                if (!res.ok) throw new Error('tutorials.json 加载失败 (HTTP ' + res.status + ')')
+                if (!res.ok) throw new Error('tutorials.json 加载失败')
                 return res.json()
             })
             .then(function(data) {
-                // 从 JSON 中提取 chapters
                 var chapters = data.chapters || []
                 var seriesTitle = data.title || data.zh?.title || tutorialId
+                var container = document.getElementById('series-toc-content')
+                if (!container) return
 
                 if (chapters.length === 0) {
-                    document.getElementById('series-toc-content').innerHTML = '<p class="toc-empty">暂无章节</p>'
+                    container.innerHTML = '<p class="toc-empty">暂无章节</p>'
                     return
                 }
-
                 var html = '<div class="series-title">' + seriesTitle + '</div>'
                 html += '<ul class="toc-list series-toc-list">'
                 chapters.forEach(function(ch) {
@@ -94,132 +113,126 @@ function generateTOC() {
                     `
                 })
                 html += '</ul>'
-                document.getElementById('series-toc-content').innerHTML = html
+                container.innerHTML = html
             })
             .catch(function(err) {
                 console.warn('⚠️ 加载 tutorials.json 失败:', err)
-                document.getElementById('series-toc-content').innerHTML = '<p class="toc-empty">暂无教程目录</p>'
+                var container = document.getElementById('series-toc-content')
+                if (container) {
+                    container.innerHTML = '<p class="toc-empty">暂无教程目录</p>'
+                }
             })
-    } else {
-        seriesTocHtml = '<p class="toc-empty">暂无教程目录</p>'
     }
 
-    // ============================================================
-    // 3. 渲染侧边栏（一个按钮切换）
-    // ============================================================
-    var sidebarHtml = `
+    sidebar.innerHTML = `
         <div class="sidebar-inner">
             <div class="sidebar-tabs">
-                <button class="sidebar-tab" id="toggleTab">📖 本页目录</button>
+                <button class="sidebar-tab active" data-tab="page" id="tab-page">📖 本页目录</button>
+                <button class="sidebar-tab" data-tab="series" id="tab-series">📚 教程目录</button>
             </div>
-            <div id="tab-content">
+            <div class="tab-content active" id="tab-content-page">
                 ${pageTocHtml}
             </div>
-            <div id="series-toc-content" style="display: none;">
-                ${seriesTocHtml}
+            <div class="tab-content" id="tab-content-series">
+                <div id="series-toc-content">${seriesTocHtml}</div>
             </div>
         </div>
     `
 
-    sidebar.innerHTML = sidebarHtml
+    // Tab 切换
+    var tabPage = document.getElementById('tab-page')
+    var tabSeries = document.getElementById('tab-series')
+    var contentPage = document.getElementById('tab-content-page')
+    var contentSeries = document.getElementById('tab-content-series')
 
-    // ============================================================
-    // 4. 切换逻辑（一个按钮）
-    // ============================================================
-    var tabBtn = document.getElementById('toggleTab')
-    var pageContent = document.getElementById('tab-content')
-    var seriesContent = document.getElementById('series-toc-content')
-    var isPageMode = true
-
-    // 默认显示本页目录（已经默认了）
-
-    function switchMode() {
-        isPageMode = !isPageMode
-        if (isPageMode) {
-            tabBtn.textContent = '📖 本页目录'
-            pageContent.style.display = 'block'
-            seriesContent.style.display = 'none'
-            localStorage.setItem('sidebar-mode', 'page')
-        } else {
-            tabBtn.textContent = '📚 教程目录'
-            pageContent.style.display = 'none'
-            seriesContent.style.display = 'block'
-            localStorage.setItem('sidebar-mode', 'series')
-        }
+    function switchTab(tab) {
+        tabPage.classList.toggle('active', tab === 'page')
+        tabSeries.classList.toggle('active', tab === 'series')
+        contentPage.classList.toggle('active', tab === 'page')
+        contentSeries.classList.toggle('active', tab === 'series')
+        localStorage.setItem('sidebar-tab', tab)
     }
 
-    tabBtn.addEventListener('click', switchMode)
+    tabPage.addEventListener('click', function() { switchTab('page') })
+    tabSeries.addEventListener('click', function() { switchTab('series') })
 
-    // 从 localStorage 恢复（默认 page，只有用户手动切换过才恢复）
-    var savedMode = localStorage.getItem('sidebar-mode')
-    if (savedMode === 'series') {
-        switchMode()
+    var savedTab = localStorage.getItem('sidebar-tab')
+    if (savedTab === 'series') {
+        switchTab('series')
     }
 
+    // 绑定本页目录的链接
+    bindTOCLinks(document.getElementById('tab-content-page'))
+
+
     // ============================================================
-    // 5. 滚动高亮（仅对「本页目录」有效）
+    // 辅助函数：绑定 TOC 链接点击和滚动高亮
     // ============================================================
-    function updateActiveTOC() {
-        var navbarHeight = 64
-        var currentId = null
-        var tocLinks = document.querySelectorAll('#tab-content .toc-link')
+    function bindTOCLinks(container) {
+        if (!container) return
+
+        var tocLinks = container.querySelectorAll('.toc-link')
         if (tocLinks.length === 0) return
 
-        headings.forEach(function(heading) {
-            var rect = heading.getBoundingClientRect()
-            if (rect.top <= navbarHeight + 20) {
-                currentId = heading.id
+        // 获取 headings
+        var headings = content.querySelectorAll('h1[id], h2[id], h3[id], h4[id]')
+
+        tocLinks.forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault()
+                var targetId = this.getAttribute('href').substring(1)
+                var target = document.getElementById(targetId)
+                if (!target) return
+
+                var navbarHeight = 64
+                var targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navbarHeight - 16
+                window.scrollTo({ top: targetPosition, behavior: 'smooth' })
+
+                tocLinks.forEach(function(l) { l.classList.remove('active') })
+                this.classList.add('active')
+                history.pushState(null, null, '#' + targetId)
+            })
+        })
+
+        function updateActiveTOC() {
+            var navbarHeight = 64
+            var currentId = null
+            headings.forEach(function(heading) {
+                var rect = heading.getBoundingClientRect()
+                if (rect.top <= navbarHeight + 20) {
+                    currentId = heading.id
+                }
+            })
+            tocLinks.forEach(function(link) {
+                link.classList.toggle('active', link.getAttribute('href') === '#' + currentId)
+            })
+        }
+
+        var ticking = false
+        window.addEventListener('scroll', function() {
+            if (!ticking) {
+                window.requestAnimationFrame(function() {
+                    updateActiveTOC()
+                    ticking = false
+                })
+                ticking = true
             }
         })
 
-        tocLinks.forEach(function(link) {
-            link.classList.toggle('active', link.getAttribute('href') === '#' + currentId)
-        })
+        setTimeout(function() {
+            var hash = window.location.hash
+            if (hash) {
+                tocLinks.forEach(function(link) {
+                    link.classList.toggle('active', link.getAttribute('href') === hash)
+                })
+            }
+            if (!hash && tocLinks.length > 0) {
+                tocLinks[0].classList.add('active')
+            }
+        }, 150)
+
+        updateActiveTOC()
     }
-
-    document.querySelectorAll('#tab-content .toc-link').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            e.preventDefault()
-            var targetId = this.getAttribute('href').substring(1)
-            var target = document.getElementById(targetId)
-            if (!target) return
-
-            var navbarHeight = 64
-            var targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navbarHeight - 16
-            window.scrollTo({ top: targetPosition, behavior: 'smooth' })
-
-            document.querySelectorAll('#tab-content .toc-link').forEach(function(l) {
-                l.classList.remove('active')
-            })
-            this.classList.add('active')
-            history.pushState(null, null, '#' + targetId)
-        })
-    })
-
-    var ticking = false
-    window.addEventListener('scroll', function() {
-        if (!ticking) {
-            window.requestAnimationFrame(function() {
-                updateActiveTOC()
-                ticking = false
-            })
-            ticking = true
-        }
-    })
-
-    setTimeout(function() {
-        var hash = window.location.hash
-        if (hash) {
-            document.querySelectorAll('#tab-content .toc-link').forEach(function(link) {
-                link.classList.toggle('active', link.getAttribute('href') === hash)
-            })
-        }
-        if (!hash && document.querySelector('#tab-content .toc-link')) {
-            document.querySelector('#tab-content .toc-link').classList.add('active')
-        }
-    }, 150)
-
-    updateActiveTOC()
 }
 
 document.addEventListener('DOMContentLoaded', generateTOC)
