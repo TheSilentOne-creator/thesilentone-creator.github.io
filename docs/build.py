@@ -547,8 +547,6 @@ def generate_html_page(tutorial, lang, title, body_html, prev_file, next_file,
                     <span class="tutorial-level">{tutorial.get('level', '')}</span>
                     <span class="tutorial-readtime">⏱️ {"About 30 min" if lang == 'en' else '约 30 分钟'}</span>
                 </div>
-                <h1>{title}</h1>
-                <p class="tutorial-subtitle">{tutorial[lang].get('description', '')}</p>
             </header>
 
             <section class="tutorial-body">

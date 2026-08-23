@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutorials · The Night Keeper's Book</title>
+    <title>Tutorials</title>
     <meta name="description" content="Learn cybersecurity from scratch - The Night Keeper's Book tutorial list">
 
     <link rel="preload" href="/css/style.css" as="style">
@@ -21,9 +21,8 @@
 </head>
 <body>
     <div id="navbar"></div>
-    
+
     <aside class="sidebar" id="sidebar"></aside>
-    
 
     <main class="main-content">
         <div class="content-inner tutorial-content">
@@ -61,7 +60,7 @@
                         <span style="color: var(--text-muted);">→</span>
                         <span style="background: var(--bg-code); color: var(--text-secondary); padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);">04. Git</span>
                         <span style="color: var(--text-muted);">→</span>
-                        <span style="background: var(--bg-code); color: var(--text-secondary); padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);">03. VIM</span>
+                        <span style="background: var(--bg-code); color: var(--text-secondary); padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);">03. Vim</span>
                         <span style="color: var(--text-muted);">→</span>
                         <span style="background: var(--bg-code); color: var(--text-secondary); padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);">07. Rust</span>
                     </div>
@@ -116,7 +115,7 @@
             <div class="tutorial-item done">
                 <span class="tutorial-num">#03</span>
                 <div class="tutorial-info">
-                    <h3><a href="/en/tutorials/03-vim/03.VIM From Entry to Decency.html">VIM: From Entry to Decency</a></h3>
+                    <h3><a href="/en/tutorials/03-vim/03.Vim From Entry to Decency.html">Vim: From Entry to Decency</a></h3>
                     <p>No GUI? Conquer the world with your keyboard.</p>
                 </div>
                 <span class="tutorial-status done">✅ Done</span>
@@ -128,7 +127,7 @@
                     <h3><span style="color: var(--text-secondary);">Git &amp; GitHub by the Horns</span></h3>
                     <p>Stop saving your code to your desktop! Version control is a must.</p>
                 </div>
-                <span class="tutorial-status coming">✍️ Writing</span>
+                <span class="tutorial-status writing">✍️ Writing</span>
             </div>
 
             <div class="tutorial-item writing">
@@ -174,16 +173,16 @@
             </div>
 
             <section id="tutorials-intro" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 32px;">
-                <h2 style="font-family: var(--font-mono); font-size: 20px; cursor: pointer;" onclick="toggleIntro()">
-                    📖 Tutorial Introductions <span id="introToggle" style="font-size: 14px; color: var(--text-muted);">(click to expand)</span>
+                <h2 id="intro-heading" style="font-family: var(--font-mono); font-size: 20px; margin-bottom: 12px;">
+                    📖 Tutorial Introductions
                 </h2>
-                <div id="introContent" style="display: none;">
+                <div id="introContent">
 
                     <div class="intro-card"><h4>01. Mastering Markdown</h4><p><strong>Stop using Notepad like a caveman!</strong><br>Markdown is like the legendary "Qinggong" (lightness skill) in martial arts novels—takes ten minutes to learn, but using it well will make you fly for a lifetime. Only teaches the top 5% of syntax you'll actually use.<br><span style="color: var(--accent);">What you'll unlock:</span> The ability to elegantly write notes that even a programmer would want to Star.</p></div>
 
                     <div class="intro-card"><h4>02. Mastering VS Code</h4><p><strong>Arm your "Swiss Army Knife"</strong><br>Many people use VS Code for years but treat it like a fancy Notepad. Step-by-step guide to installing those "cheat-code" plugins.<br><span style="color: var(--accent);">What you'll unlock:</span> A cloud development environment that lets you write code anywhere.</p></div>
 
-                    <div class="intro-card"><h4>03. VIM: From Entry to Decency</h4><p><strong>No GUI? Conquer the world with your keyboard</strong><br>VIM's learning curve is as steep as a cliff. Only 10 mandatory lessons—no useless commands.<br><span style="color: var(--accent);">What you'll unlock:</span> The confidence to smoothly write code on any server.</p></div>
+                    <div class="intro-card"><h4>03. Vim: From Entry to Decency</h4><p><strong>No GUI? Conquer the world with your keyboard</strong><br>Vim's learning curve is as steep as a cliff. Only 10 mandatory lessons—no useless commands.<br><span style="color: var(--accent);">What you'll unlock:</span> The confidence to smoothly write code on any server.</p></div>
 
                     <div class="intro-card"><h4>04. Git &amp; GitHub by the Horns</h4><p><strong>Stop saving your code to your desktop!</strong><br>Git cures "version chaos." GitHub is the programmer's social circle.<br><span style="color: var(--accent);">What you'll unlock:</span> A green GitHub contribution wall + "Hey, just Fork my project first."</p></div>
 
@@ -199,7 +198,7 @@
             </section>
 
             <section id="tutorials-about" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 32px;">
-                <h2 style="font-family: var(--font-mono); font-size: 20px;">🌙 About the Night Keepers</h2>
+                <h2 id="about-heading" style="font-family: var(--font-mono); font-size: 20px;">🌙 About the Night Keepers</h2>
                 <p style="color: var(--text-secondary);">
                     The Night Keepers is a tech learning community.<br>
                     <strong>We believe</strong>: Start from zero. Progress together.<br>
@@ -217,20 +216,6 @@
     </main>
 
     <div id="footer"></div>
-
-    <script>
-        function toggleIntro() {
-            var content = document.getElementById('introContent')
-            var toggle = document.getElementById('introToggle')
-            if (content.style.display === 'none') {
-                content.style.display = 'block'
-                toggle.textContent = '(click to collapse)'
-            } else {
-                content.style.display = 'none'
-                toggle.textContent = '(click to expand)'
-            }
-        }
-    </script>
 
     <script src="/js/loader.js"></script>
 </body>
